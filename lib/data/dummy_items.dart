@@ -18,5 +18,4 @@ final groceryItems = [
       name: 'Beef Steak',
       quantity: 1,
       category: categories[Categories.meat]!),
-
 ];
