@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:shopping_list_app/data/categories.dart';
 import 'package:shopping_list_app/model/categories.dart';
+import 'package:shopping_list_app/model/grocery_items.dart';
 
 class NewItem extends StatefulWidget {
   NewItem({super.key});
@@ -13,18 +14,19 @@ class NewItem extends StatefulWidget {
 }
 
 class _StateNewItem extends State<NewItem> {
-  var _enteredName='';
-  var _enteredQuantity=1;
-  var _seletedCategory=categories[Categories.vegetables]!;
+  var _enteredName = '';
+  var _enteredQuantity = 1;
+  var _seletedCategory = categories[Categories.vegetables]!;
   final _formKey = GlobalKey<FormState>();
   void _saveItem() {
-    if(_formKey.currentState!.validate()){
-    _formKey.currentState!.save();
-    print(_enteredName);
-    print(_enteredQuantity);
-    print(_seletedCategory);
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+      Navigator.of(context).pop(GroceryItem(
+          id: DateTime.now().toString(),
+          name: _enteredName,
+          quantity: _enteredQuantity,
+          category: _seletedCategory));
     }
-
   }
 
   @override
@@ -35,14 +37,14 @@ class _StateNewItem extends State<NewItem> {
         title: const Text('Add New Item'),
       ),
       body: Padding(
-        padding:const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Form(
             key: _formKey,
             child: Column(
               children: [
                 TextFormField(
-                  onSaved:(value){
-                    _enteredName=value!;
+                  onSaved: (value) {
+                    _enteredName = value!;
                   },
                   maxLength: 50,
                   decoration: const InputDecoration(
@@ -51,7 +53,8 @@ class _StateNewItem extends State<NewItem> {
                   validator: (value) {
                     if (value == null ||
                         value.isEmpty ||
-                        value.trim().length <= 1 ||//trim remove any space at begning & end
+                        value.trim().length <=
+                            1 || //trim remove any space at begning & end
                         value.trim().length > 50) {
                       return 'Must be between 1 and 50 characters.';
                     }
@@ -63,16 +66,18 @@ class _StateNewItem extends State<NewItem> {
                   children: [
                     Expanded(
                       child: TextFormField(
-                        onSaved: (value){
-                          _enteredQuantity=int.parse(value!);
+                        onSaved: (value) {
+                          _enteredQuantity = int.parse(value!);
                         },
                         initialValue: '1',
                         keyboardType: TextInputType.number,
                         validator: (value) {
                           if (value == null ||
                               value.isEmpty ||
-                              int.tryParse(value) == null || //tryParse give null if the input is String
-                              int.tryParse(value)! <= 0) {  //avoid enter negative value
+                              int.tryParse(value) ==
+                                  null || //tryParse give null if the input is String
+                              int.tryParse(value)! <= 0) {
+                            //avoid enter negative value
                             return 'Must be a valid, positive number.';
                           }
                           return null;
@@ -87,31 +92,33 @@ class _StateNewItem extends State<NewItem> {
                     ),
                     Expanded(
                       child: DropdownButtonFormField(
-                        value: _seletedCategory,
-                        items: [
-                        for (final category in categories
-                            .entries) //entries change the map of categories into List
-                          DropdownMenuItem(
-                            value: category.value,
-                            child: Row(
-                              children: [
-                                Container( // Square shape beside the Category
-                                  width: 10,
-                                  height: 10,
-                                  color: category.value.color,
+                          value: _seletedCategory,
+                          items: [
+                            for (final category in categories
+                                .entries) //entries change the map of categories into List
+                              DropdownMenuItem(
+                                value: category.value,
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      // Square shape beside the Category
+                                      width: 10,
+                                      height: 10,
+                                      color: category.value.color,
+                                    ),
+                                    const SizedBox(
+                                      width: 6,
+                                    ),
+                                    Text(category.value.title)
+                                  ],
                                 ),
-                                const SizedBox(
-                                  width: 6,
-                                ),
-                                Text(category.value.title)
-                              ],
-                            ),
-                          )
-                      ], onChanged: (value) {
-                        setState(() {
-                        _seletedCategory=value!;
-                        });
-                      }),
+                              )
+                          ],
+                          onChanged: (value) {
+                            setState(() {
+                              _seletedCategory = value!;
+                            });
+                          }),
                     ),
                   ],
                 ),
