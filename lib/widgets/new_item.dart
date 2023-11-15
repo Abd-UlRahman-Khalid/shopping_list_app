@@ -1,5 +1,7 @@
-import 'package:flutter/cupertino.dart';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:shopping_list_app/data/categories.dart';
 import 'package:shopping_list_app/model/categories.dart';
 import 'package:shopping_list_app/model/grocery_items.dart';
@@ -18,11 +20,34 @@ class _StateNewItem extends State<NewItem> {
   var _enteredQuantity = 1;
   var _seletedCategory = categories[Categories.vegetables]!;
   final _formKey = GlobalKey<FormState>();
-  void _saveItem() {
+
+  void _saveItem() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
+      final url = Uri.https('flutter-prep-c0f70-default-rtdb.firebaseio.com',
+          'shopping-list.json');
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode(
+          {
+            'name': _enteredName,
+            'quantity': _enteredQuantity,
+            'category': _seletedCategory.title,
+          },
+        ),
+      );
+
+      final Map<String, dynamic> restData = json.decode(response.body);
+
+      if (!context.mounted) {
+        return;
+      }
+
       Navigator.of(context).pop(GroceryItem(
-          id: DateTime.now().toString(),
+          id: restData['name'],
           name: _enteredName,
           quantity: _enteredQuantity,
           category: _seletedCategory));
@@ -33,7 +58,6 @@ class _StateNewItem extends State<NewItem> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        actions: [],
         title: const Text('Add New Item'),
       ),
       body: Padding(
