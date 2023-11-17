@@ -59,6 +59,7 @@ class _GroceryItemsState extends State<GroceryItems> {
       });
     } catch (error) {
       setState(() {
+        
         _error = 'Something went wrong! Please try again later.';
       });
     }
