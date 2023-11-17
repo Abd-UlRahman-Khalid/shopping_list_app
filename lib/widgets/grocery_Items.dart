@@ -14,6 +14,8 @@ class GroceryItems extends StatefulWidget {
 
 class _GroceryItemsState extends State<GroceryItems> {
   List<GroceryItem> _grocaryItem = [];
+  var _isLoading=true;
+  String? _error;
 
   @override
   void initState() {
@@ -24,11 +26,16 @@ class _GroceryItemsState extends State<GroceryItems> {
   void _loadItem() async {
     final url = Uri.https(
         'flutter-prep-c0f70-default-rtdb.firebaseio.com', 'shopping-list.json');
-    final responed = await http.get(url);
+    final response = await http.get(url);
+    if (response.statusCode >= 400) {
+      setState(() {
+        _error = 'Failed to fetch data. Please try again later.';
+      });
+    }
     final List<GroceryItem> loadedItems = [];
 
     final Map<String, dynamic> listData =
-        json.decode(responed.body);
+        json.decode(response.body);
     for (final item in listData.entries) {
       final category=categories.entries.firstWhere((catItem) => catItem.value.title == item.value['category']).value;
       loadedItems.add(GroceryItem(
@@ -48,23 +55,40 @@ class _GroceryItemsState extends State<GroceryItems> {
         builder: (context) => NewItem(),
       ),
     );
-    if(newItem == null){
-      return;
-    }
-
-    setState(() {
-      _grocaryItem..add(newItem);
-    });
+      if(newItem==null){
+        return;
+      }
+      setState(() {
+        _grocaryItem.add(newItem);
+        _isLoading=false;
+      });
   }
 
-  void _removeItem(GroceryItem item) {
+  void _removeItem(GroceryItem item) async {
+    final index = _grocaryItem.indexOf(item);
     setState(() {
       _grocaryItem.remove(item);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                content: Text('Item Removed')));
     });
+
+    final url = Uri.https('flutter-prep-c0f70-default-rtdb.firebaseio.com',
+        'shopping-list/${item.id}.json');
+
+    final response = await http.delete(url);
+
+    if (response.statusCode >= 400) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                content: Text('Oh can not remove it now ! , please try again later. ')));
+      setState(() {
+        _grocaryItem.insert(index, item);
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+
     Widget content = Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -89,6 +113,11 @@ class _GroceryItemsState extends State<GroceryItems> {
         ],
       ),
     );
+
+    if (_isLoading) {
+      content = const Center(child: CircularProgressIndicator());
+    }
+
     if (_grocaryItem.isNotEmpty) {
       content = Container(
           margin: const EdgeInsets.all(10),
@@ -110,6 +139,7 @@ class _GroceryItemsState extends State<GroceryItems> {
                     ),
                   ))));
     }
+    
     return Scaffold(
         appBar: AppBar(
           actions: [
